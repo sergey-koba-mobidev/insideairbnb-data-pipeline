@@ -1,0 +1,12 @@
+# workspace.yaml
+
+load_from:
+  # Option: Loading from a Python file
+  # This assumes you have a file named 'definitions.py' in your dagster_project folder
+  - python_file:
+      relative_path: "definitions.py"
+      location_name: "airbnb_pipeline_location"
+
+  # Optional: If you want to use dbt as a separate code location later
+  # - python_module:
+  #     module_name: "my_dbt_project.definitions"

@@ -1,0 +1,30 @@
+# dagster.yaml
+
+# 1. Persistent Storage using Postgres
+storage:
+  postgres:
+    postgres_db:
+      username: 
+        env: POSTGRES_USER
+      password: 
+        env: POSTGRES_PASSWORD
+      hostname: 
+        env: DAGSTER_DB_HOST # Ensure this matches your service name: dagster_db
+      db_name: 
+        env: POSTGRES_DB
+      port: 5432
+
+# 2. Run Launcher - determines how new runs are started
+# Since we are in Docker Compose, we use the DefaultRunLauncher
+run_launcher:
+  module: dagster.core.launcher
+  class: DefaultRunLauncher
+
+# 3. Scheduler & Sensors
+scheduler:
+  module: dagster.core.scheduler
+  class: DagsterDaemonScheduler
+
+# 4. Telemetry (Optional: Disable if you want privacy)
+telemetry:
+  enabled: false

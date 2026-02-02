@@ -1,0 +1,91 @@
+version: "3.8"
+
+services:
+  # --- STORAGE ---
+  minio:
+    image: minio/minio
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address ":9001"
+
+  # --- CATALOG (Nessie) ---
+  nessie:
+    image: ghcr.io/projectnessie/nessie:latest
+    container_name: nessie
+    ports:
+      - "${NESSIE_VERSION_CATALOG_PORT}:19120"
+    environment:
+      - QUARKUS_HTTP_PORT=19120
+    depends_on:
+      - minio
+    profiles:
+      - disabled
+
+  # --- METADATA DB ---
+  dagster_db:
+    image: postgres:13
+    container_name: dagster_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+
+  # --- DAGSTER WEBSERVER ---
+  dagster_webserver:
+    build: ./dagster_project
+    container_name: dagster_webserver
+    volumes:
+      - ./dagster_project:/opt/dagster/app
+    entrypoint:
+      [
+        "dagster-webserver",
+        "-h",
+        "0.0.0.0",
+        "-p",
+        "3000",
+        "-w",
+        "workspace.yaml",
+      ]
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - dagster_db
+      # - nessie
+
+  # --- DAGSTER DAEMON ---
+  dagster_daemon:
+    build: ./dagster_project
+    container_name: dagster_daemon
+    volumes:
+      - ./dagster_project:/opt/dagster/app
+    entrypoint: ["dagster-daemon", "run"]
+    env_file:
+      - .env
+    depends_on:
+      - dagster_db
+
+  # --- ANALYTICS ---
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    ports:
+      - "${CLICKHOUSE_HTTP_PORT}:8123"
+      - "${CLICKHOUSE_NATIVE_PORT}:9000"
+    environment:
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    profiles:
+      - disabled

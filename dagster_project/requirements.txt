@@ -1,0 +1,10 @@
+dagster==1.12.13
+dagster-webserver==1.12.13
+dagster-postgres==0.28.13
+dagster-dbt==0.28.13
+dagster-duckdb==0.28.13
+pyiceberg[s3fs,zstandard]==0.9.1
+duckdb==1.4.4
+dbt-clickhouse==1.9.8
+boto3==1.42.30
+pandas==3.0.0
