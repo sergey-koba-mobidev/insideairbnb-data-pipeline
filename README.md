@@ -37,3 +37,22 @@ After running `make up`, access the MinIO Console at: [http://localhost:9001](ht
 **Default credentials** (see your `.env` file or `.env.example`):
 - Username: `minioadmin` (or `${MINIO_ROOT_USER}`)
 - Password: `minioadmin` (or `${MINIO_ROOT_PASSWORD}`)
+
+## Development
+This project uses `ruff` for linting and formatting.
+
+- `make lint`: Check for linting errors.
+- `make lint-fix`: Automatically fix common linting errors.
+- `make format`: Format code according to project style.
+
+## Data Source & Attribution
+
+This project uses data provided by [Inside Airbnb](https://insideairbnb.com/).
+
+* **Source:** [Inside Airbnb - Get the Data](https://insideairbnb.com/get-the-data/)
+* **License:** [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)
+* **Disclaimer:** This project is an independent research work and is not associated with or endorsed by Inside Airbnb or Airbnb, Inc. The data is utilized for non-commercial, educational, and research purposes.
+
+### Citation
+If you use the findings or pipeline from this project, please cite the original data source:
+> Cox, M. (2026). Inside Airbnb. Retrieved from http://insideairbnb.com/

@@ -5,7 +5,7 @@ ENV_EXAMPLE := .env.example
 # --- Default Goal ---
 .DEFAULT_GOAL := help
 
-.PHONY: help setup build up down ps logs clean
+.PHONY: help setup build up down ps logs clean lint format
 
 help: ## Show this help message
 	@echo "Usage: make [target]"
@@ -40,3 +40,12 @@ logs: ## Tail logs for all services
 clean: ## Remove containers, networks, and volumes
 	docker compose down -v
 	@echo "Note: .env file was NOT removed. Delete it manually if needed."
+
+lint: ## Run linter (ruff) on dagster_project
+	docker compose exec dagster_daemon ruff check .
+
+lint-fix: ## Run linter and fix issues automatically
+	docker compose exec dagster_daemon ruff check --fix .
+
+format: ## Run formatter (ruff) on dagster_project
+	docker compose exec dagster_daemon ruff format .
