@@ -49,3 +49,27 @@ lint-fix: ## Run linter and fix issues automatically
 
 format: ## Run formatter (ruff) on dagster_project
 	docker compose exec dagster_daemon ruff format .
+
+export-code: ## Export all Python code and YAMLs into code_listing.md
+	@echo "Exporting code to code_listing.md..."
+	@echo "# Project Code Listing" > code_listing.md
+	@echo "" >> code_listing.md
+	@echo "# .github/copilot-instructions.md" >> code_listing.md
+	@echo "\`\`\`markdown" >> code_listing.md
+	@cat .github/copilot-instructions.md >> code_listing.md
+	@echo "" >> code_listing.md
+	@echo "\`\`\`" >> code_listing.md
+	@echo "" >> code_listing.md
+	@find . -type f \( -name "*.py" -o -name "*.yaml" -o -name "*.yml" \) \
+		-not -path "*/.*" \
+		-not -path "*/__pycache__/*" \
+		-not -path "*/node_modules/*" \
+		-not -path "*/venv/*" | while read -r file; do \
+			echo "# $$file" >> code_listing.md; \
+			echo "\`\`\`" >> code_listing.md; \
+			cat "$$file" >> code_listing.md; \
+			echo "" >> code_listing.md; \
+			echo "\`\`\`" >> code_listing.md; \
+			echo "" >> code_listing.md; \
+		done
+	@echo "Done! File created at code_listing.md"
