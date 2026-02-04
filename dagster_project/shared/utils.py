@@ -2,12 +2,17 @@ import unicodedata
 
 
 def normalize_string(s: str) -> str:
-    """Normalize string by removing accents, spaces to underscores, and lowercasing."""
+    """Normalize string by removing accents, spaces/commas to underscores, and lowercasing."""
     if not s:
         return ""
     nksfd = unicodedata.normalize("NFKD", s)
     ascii_only = "".join([c for c in nksfd if not unicodedata.combining(c)])
-    return ascii_only.replace(" ", "_").lower()
+    # Replace spaces, commas, and dots with underscores
+    res = ascii_only.replace(" ", "_").replace(",", "_").replace(".", "_")
+    # Collapse multiple underscores
+    while "__" in res:
+        res = res.replace("__", "_")
+    return res.lower().strip("_")
 
 
 def repair_mangled_string(s: str) -> str:

@@ -37,12 +37,16 @@ ps: ## Check status of containers
 logs: ## Tail logs for all services
 	docker compose logs -f
 
-clean: ## Remove containers, networks, and volumes
+clean: ## Remove contmakeainers, networks, and volumes
 	docker compose down -v
 	@echo "Note: .env file was NOT removed. Delete it manually if needed."
 
 dagster-validate: ## Validate Dagster project
 	docker compose run --rm --entrypoint dagster dagster_daemon definitions validate -f definitions.py
+
+dagster-wipe: ## Wipe Dagster instance
+	docker compose run --rm --entrypoint dagster dagster_webserver run wipe
+	docker compose run --rm --entrypoint dagster dagster_webserver asset wipe --all
 
 lint: ## Run linter (ruff) on dagster_project
 	docker compose run --rm --entrypoint ruff dagster_daemon check .

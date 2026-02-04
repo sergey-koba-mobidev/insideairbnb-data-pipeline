@@ -38,6 +38,9 @@ After running `make up`, access the MinIO Console at: [http://localhost:9001](ht
 - Username: `minioadmin` (or `${MINIO_ROOT_USER}`)
 - Password: `minioadmin` (or `${MINIO_ROOT_PASSWORD}`)
 
+### Nessie Web UI
+- http://localhost:19120/
+
 ## Development
 This project uses `ruff` for linting and formatting.
 

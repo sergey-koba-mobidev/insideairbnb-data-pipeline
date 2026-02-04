@@ -5,6 +5,7 @@ from dagster import (
     RunRequest,
     AddDynamicPartitionsRequest,
     DefaultSensorStatus,
+    SensorResult,
 )
 from resources import MinIOResource
 from partitions import airbnb_partitions
@@ -66,13 +67,16 @@ def airbnb_data_monitor_sensor(context: SensorEvaluationContext, minio: MinIORes
                 )
             )
 
-    return (
-        [
+    dynamic_partitions_requests = []
+    if partition_requests:
+        dynamic_partitions_requests.append(
             AddDynamicPartitionsRequest(
                 partitions_def_name=airbnb_partitions.name,
                 partition_keys=list(set(partition_requests)),
             )
-        ]
-        if partition_requests
-        else []
-    ) + run_requests
+        )
+
+    return SensorResult(
+        run_requests=run_requests,
+        dynamic_partitions_requests=dynamic_partitions_requests,
+    )

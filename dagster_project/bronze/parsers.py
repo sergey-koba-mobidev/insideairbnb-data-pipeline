@@ -26,7 +26,11 @@ class InsideAirbnbParser:
         for h3 in h3s:
             h3_text = h3.get_text(strip=True)
             if "," in h3_text:
-                city, country = [s.strip() for s in h3_text.split(",", 1)]
+                # Handle "Bozeman, Montana, United States" or "Paris, France"
+                # Country is always the last part, City/State is the rest
+                parts = [s.strip() for s in h3_text.rsplit(",", 1)]
+                city = parts[0]
+                country = parts[1]
 
                 h4 = h3.find_next_sibling("h4")
                 while h4 and h4.name != "h3":

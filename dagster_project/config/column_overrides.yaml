@@ -1,8 +1,28 @@
 listings:
+  id: BIGINT
+  host_id: BIGINT
+  latitude: DOUBLE
+  longitude: DOUBLE
+  price: BIGINT
+  minimum_nights: BIGINT
+  number_of_reviews: BIGINT
+  last_review: DATE
+  reviews_per_month: DOUBLE
+  calculated_host_listings_count: BIGINT
+  availability_365: BIGINT
+  number_of_reviews_ltm: BIGINT
   neighbourhood: VARCHAR
   neighbourhood_group: VARCHAR
   license: VARCHAR
   name: VARCHAR
+  host_name: VARCHAR
+  room_type: VARCHAR
 reviews:
+  listing_id: BIGINT
+  id: BIGINT
+  date: DATE
+  reviewer_id: BIGINT
   comments: VARCHAR
-neighbourhoods: {}
+neighbourhoods:
+  neighbourhood_group: VARCHAR
+  neighbourhood: VARCHAR

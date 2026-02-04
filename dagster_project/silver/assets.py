@@ -4,6 +4,8 @@ from dagster import (
     AssetExecutionContext,
     multi_asset,
     AssetOut,
+    RetryPolicy,
+    Backoff,
 )
 from resources import MinIOResource
 from partitions import airbnb_partitions
@@ -21,6 +23,11 @@ from bronze.assets import airbnb_raw_data
     deps=[airbnb_raw_data],
     partitions_def=airbnb_partitions,
     compute_kind="duckdb",
+    retry_policy=RetryPolicy(
+        max_retries=3,
+        delay=60,  # Wait 1 minute
+        backoff=Backoff.EXPONENTIAL,  # Wait longer each time
+    ),
 )
 def airbnb_iceberg_tables(context: AssetExecutionContext, minio: MinIOResource):
     partition_key = context.partition_key
@@ -83,7 +90,7 @@ def airbnb_iceberg_tables(context: AssetExecutionContext, minio: MinIOResource):
                     '{country}'::VARCHAR as partition_country,
                     '{city}'::VARCHAR as partition_city,
                     '{date}'::DATE as partition_date
-                FROM read_csv_auto('{s3_source}'{types_str})
+                FROM read_csv_auto('{s3_source}'{types_str}, ignore_errors=true)
             """
 
         arrow_table = repo.fetch_arrow_table(load_query)

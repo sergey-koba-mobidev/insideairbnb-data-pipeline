@@ -1,7 +1,14 @@
 import os
+import random
+import time
 import duckdb
 from pyiceberg.catalog import load_catalog
-from pyiceberg.exceptions import NamespaceAlreadyExistsError, NoSuchTableError
+from pyiceberg.exceptions import (
+    CommitFailedException,
+    NamespaceAlreadyExistsError,
+    NoSuchTableError,
+    TableAlreadyExistsError,
+)
 from typing import Any, List
 import pyarrow as pa
 
@@ -60,7 +67,7 @@ class NessieCatalogRepository:
             return [
                 row[0]
                 for row in self.con.execute(
-                    f"DESCRIBE SELECT * FROM read_csv_auto('{s3_source}')"
+                    f"DESCRIBE SELECT * FROM read_csv_auto('{s3_source}', ignore_errors=true)"
                 ).fetchall()
             ]
         except duckdb.Error as e:
@@ -71,16 +78,67 @@ class NessieCatalogRepository:
         return self.con.execute(query).fetch_arrow_table()
 
     def append_to_iceberg(self, identifier: str, arrow_table: pa.Table):
-        try:
-            table = self.catalog.load_table(identifier)
-            self.log.info(f"Loaded existing table {identifier}")
-        except NoSuchTableError:
-            self.log.info(f"Creating new Iceberg table {identifier}...")
-            table = self.catalog.create_table(
-                identifier,
-                schema=arrow_table.schema,
-            )
+        max_retries = 10
+        for attempt in range(max_retries):
+            try:
+                try:
+                    table = self.catalog.load_table(identifier)
+                    self.log.info(f"Loaded existing table {identifier}")
+                except NoSuchTableError:
+                    self.log.info(f"Creating new Iceberg table {identifier}...")
+                    try:
+                        table = self.catalog.create_table(
+                            identifier,
+                            schema=arrow_table.schema,
+                        )
+                    except TableAlreadyExistsError:
+                        self.log.info(
+                            f"Table {identifier} was created concurrently. Loading..."
+                        )
+                        table = self.catalog.load_table(identifier)
 
-        self.log.info(f"Appending data to {identifier}...")
-        table.append(arrow_table)
-        self.log.info(f"Appended {arrow_table.num_rows} rows to {identifier}")
+                # Ensure name mapping exists for better compatibility with non-Iceberg sources
+                if "schema.name-mapping.default" not in table.properties:
+                    from pyiceberg.table.name_mapping import create_mapping_from_schema
+
+                    with table.transaction() as tx:
+                        tx.set_properties(
+                            {
+                                "schema.name-mapping.default": create_mapping_from_schema(
+                                    table.schema()
+                                ).model_dump_json()
+                            }
+                        )
+                    table = self.catalog.load_table(identifier)
+
+                # Evolve schema if necessary using union_by_name
+                # union_by_name supports pyarrow.Schema and handles name-based mapping
+                self.log.info(f"Syncing schema for {identifier}...")
+                with table.update_schema() as update:
+                    update.union_by_name(arrow_table.schema)
+
+                # Reload table after potential schema update
+                table = self.catalog.load_table(identifier)
+
+                self.log.info(
+                    f"Appending data to {identifier} (attempt {attempt + 1})..."
+                )
+                table.append(arrow_table)
+                self.log.info(f"Appended {arrow_table.num_rows} rows to {identifier}")
+                return
+
+            except CommitFailedException as e:
+                if attempt < max_retries - 1:
+                    # Exponential backoff with jitter
+                    wait_time = (2**attempt) + (random.randint(0, 1000) / 1000.0)
+                    self.log.warning(
+                        f"Commit failed for {identifier} (concurrent update). "
+                        f"Retrying in {wait_time:.2f}s... Error: {e}"
+                    )
+                    time.sleep(wait_time)
+                else:
+                    self.log.error(f"Max retries reached for {identifier}. Failing.")
+                    raise e
+            except Exception as e:
+                self.log.error(f"Unexpected error appending to {identifier}: {e}")
+                raise e
