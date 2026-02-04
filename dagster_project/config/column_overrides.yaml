@@ -1,0 +1,8 @@
+listings:
+  neighbourhood: VARCHAR
+  neighbourhood_group: VARCHAR
+  license: VARCHAR
+  name: VARCHAR
+reviews:
+  comments: VARCHAR
+neighbourhoods: {}

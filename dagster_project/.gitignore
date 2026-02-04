@@ -3,3 +3,4 @@ __pycache__/
 .nux/
 logs/
 storage/
+.ruff_cache/

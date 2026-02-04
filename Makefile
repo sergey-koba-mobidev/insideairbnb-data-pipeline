@@ -5,7 +5,7 @@ ENV_EXAMPLE := .env.example
 # --- Default Goal ---
 .DEFAULT_GOAL := help
 
-.PHONY: help setup build up down ps logs clean lint format
+.PHONY: help setup build up down ps logs clean lint format restart
 
 help: ## Show this help message
 	@echo "Usage: make [target]"
@@ -41,14 +41,17 @@ clean: ## Remove containers, networks, and volumes
 	docker compose down -v
 	@echo "Note: .env file was NOT removed. Delete it manually if needed."
 
+dagster-validate: ## Validate Dagster project
+	docker compose run --rm --entrypoint dagster dagster_daemon definitions validate -f definitions.py
+
 lint: ## Run linter (ruff) on dagster_project
-	docker compose exec dagster_daemon ruff check .
+	docker compose run --rm --entrypoint ruff dagster_daemon check .
 
 lint-fix: ## Run linter and fix issues automatically
-	docker compose exec dagster_daemon ruff check --fix .
+	docker compose run --rm --entrypoint ruff dagster_daemon check --fix .
 
 format: ## Run formatter (ruff) on dagster_project
-	docker compose exec dagster_daemon ruff format .
+	docker compose run --rm --entrypoint ruff dagster_daemon format .
 
 export-code: ## Export all Python code and YAMLs into code_listing.md
 	@echo "Exporting code to code_listing.md..."
@@ -73,3 +76,7 @@ export-code: ## Export all Python code and YAMLs into code_listing.md
 			echo "" >> code_listing.md; \
 		done
 	@echo "Done! File created at code_listing.md"
+
+restart: ## Stop and restart all containers
+	docker compose stop
+	docker compose up -d
