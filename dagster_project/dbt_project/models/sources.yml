@@ -1,0 +1,18 @@
+version: 2
+
+sources:
+  - name: iceberg
+    database: iceberg_source
+    tables:
+      - name: listings
+        meta:
+          external_location: "silver.listings"
+      - name: reviews
+        meta:
+          external_location: "silver.reviews"
+      - name: neighbourhoods
+        meta:
+          external_location: "silver.neighbourhoods"
+      - name: geo_neighbourhoods
+        meta:
+          external_location: "silver.geo_neighbourhoods"

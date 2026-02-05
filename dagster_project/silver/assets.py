@@ -19,6 +19,7 @@ from bronze.assets import airbnb_raw_data
         "silver_listings": AssetOut(group_name="silver"),
         "silver_reviews": AssetOut(group_name="silver"),
         "silver_neighbourhoods": AssetOut(group_name="silver"),
+        "silver_geo_neighbourhoods": AssetOut(group_name="silver"),
     },
     deps=[airbnb_raw_data],
     partitions_def=airbnb_partitions,
@@ -31,7 +32,13 @@ from bronze.assets import airbnb_raw_data
 )
 def airbnb_iceberg_tables(context: AssetExecutionContext, minio: MinIOResource):
     partition_key = context.partition_key
-    city, country, date = partition_key.split("|")
+    parts = partition_key.split("|")
+    if len(parts) != 3:
+        raise ValueError(
+            f"Partition key {partition_key} is not in the format 'city|country|date'"
+        )
+
+    city, country, date = parts
 
     city = repair_mangled_string(city)
     country = repair_mangled_string(country)
@@ -65,7 +72,8 @@ def airbnb_iceberg_tables(context: AssetExecutionContext, minio: MinIOResource):
         if is_spatial:
             load_query = f"""
                 SELECT
-                    *,
+                    * EXCLUDE (geometry),
+                    geometry::VARCHAR as geometry,
                     '{country}'::VARCHAR as partition_country,
                     '{city}'::VARCHAR as partition_city,
                     '{date}'::DATE as partition_date
@@ -96,4 +104,4 @@ def airbnb_iceberg_tables(context: AssetExecutionContext, minio: MinIOResource):
         arrow_table = repo.fetch_arrow_table(load_query)
         repo.append_to_iceberg(identifier, arrow_table)
 
-    return None, None, None
+    return None, None, None, None

@@ -48,6 +48,19 @@ dagster-wipe: ## Wipe Dagster instance
 	docker compose run --rm --entrypoint dagster dagster_webserver run wipe
 	docker compose run --rm --entrypoint dagster dagster_webserver asset wipe --all
 
+nessie-wipe: ## Wipe Nessie catalog (RocksDB data)
+	docker compose stop nessie
+	docker compose run --rm --entrypoint sh nessie -c "rm -rf /data/nessie/*"
+	docker compose start nessie
+
+minio-wipe: ## Wipe all data in MinIO (airbnb-data bucket)
+	docker compose exec minio sh -c "rm -rf /data/airbnb-data/*"
+
+clickhouse-setup: ## Run ClickHouse Iceberg setup script
+	docker compose exec dagster_daemon python setup_clickhouse.py
+
+wipe-all: dagster-wipe nessie-wipe minio-wipe ## Wipe all data (Dagster, Nessie, and MinIO)
+
 lint: ## Run linter (ruff) on dagster_project
 	docker compose run --rm --entrypoint ruff dagster_daemon check .
 

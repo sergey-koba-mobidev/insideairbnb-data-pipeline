@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 [tool.ruff]
 line-length = 88
 target-version = "py311"
+extend-exclude = ["dagster_project/dbt_project/**"]
 
 [tool.ruff.lint]
 select = [

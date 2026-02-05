@@ -4,3 +4,8 @@ __pycache__/
 logs/
 storage/
 .ruff_cache/
+partial_parse.msgpack
+# dbt
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/

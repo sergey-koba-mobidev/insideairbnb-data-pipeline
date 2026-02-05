@@ -15,9 +15,9 @@ from bronze.parsers import InsideAirbnbParser
 
 
 class AirbnbDownloadConfig(Config):
-    delay: int
-    bucket: str
-    max_retries: int
+    delay: int = int(os.getenv("DOWNLOAD_DELAY_SECONDS", "5"))
+    bucket: str = os.getenv("MINIO_BUCKET_NAME", "airbnb-data")
+    max_retries: int = int(os.getenv("MAX_RETRIES_PER_FILE", "3"))
 
 
 @asset(partitions_def=airbnb_partitions, group_name="bronze", compute_kind="python")
@@ -25,7 +25,13 @@ def airbnb_raw_data(
     context: AssetExecutionContext, config: AirbnbDownloadConfig, minio: MinIOResource
 ):
     partition_key = context.partition_key
-    city, country, date = partition_key.split("|")
+    parts = partition_key.split("|")
+    if len(parts) != 3:
+        raise ValueError(
+            f"Partition key {partition_key} is not in the format 'city|country|date'"
+        )
+
+    city, country, date = parts
 
     city = repair_mangled_string(city)
     country = repair_mangled_string(country)

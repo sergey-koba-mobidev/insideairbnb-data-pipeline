@@ -1,2 +1,10 @@
 .env
 code_listing.md
+.DS_Store
+.user.yml
+__pycache__/
+*.py[cod]
+*$py.class
+dagster_project/dbt_project/target/
+dagster_project/dbt_project/logs/
+dagster_project/dbt_project/dbt_packages/

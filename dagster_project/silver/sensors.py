@@ -35,7 +35,16 @@ def airbnb_bronze_to_silver_sensor(context: SensorEvaluationContext):
     )
 
     for partition_key in partition_keys:
-        city, country, date = partition_key.split("|")
+        if "|" not in partition_key:
+            context.log.warning(f"Skipping invalid partition key: {partition_key}")
+            continue
+
+        parts = partition_key.split("|")
+        if len(parts) != 3:
+            context.log.warning(f"Skipping malformed partition key: {partition_key}")
+            continue
+
+        city, country, date = parts
 
         # Need normalize_string here too
         from shared.utils import normalize_string
